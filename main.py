@@ -1,13 +1,23 @@
 import os
 from datetime import datetime
 
+from car import Car
+from car_details import fetch_car_details
 from read_plate import read_plate
-from util import compare_plate_results
 
 MODEL = 'qwen3-vl'
 
 
 def main():
+    results = _fetch_plates()
+    car_details = _fetch_details(results)
+    for car_detail in car_details:
+        print(car_detail)
+    # _write_result_to_file(results)
+    # compare_plate_results()
+
+
+def _fetch_plates() -> dict[str, str]:
     print(f"Starting read_plate.py using '{MODEL}' ...")
     paths = _get_image_paths('./cars')
     results = {}
@@ -15,8 +25,20 @@ def main():
         plate = read_plate(path, MODEL)
         results[path] = plate
         print(f'path: {path}, plate: {plate}')
-    _write_result_to_file(results)
-    compare_plate_results()
+    return results
+
+
+def _fetch_details(results: dict[str, str]) -> list[Car]:
+    car_detail_list: list[Car | str] = []
+    for path in results:
+        plate = results[path]
+        if plate is not None:
+            try:
+                car_detail = fetch_car_details(plate)
+                car_detail_list.append(car_detail)
+            except Exception as e:
+                car_detail_list.append(f"Something went wrong with plate {plate}: {str(e)}")
+    return car_detail_list
 
 
 def _format_path_name(image_path: str) -> str:

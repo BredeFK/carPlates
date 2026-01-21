@@ -2,6 +2,8 @@ import os
 from ollama import chat
 from ollama import ChatResponse
 
+from car import plate_is_valid
+
 
 def read_plate(image_path: str, model: str) -> str | None:
     ollama_response = _ollama_read_image(image_path, model)
@@ -29,6 +31,11 @@ def _ollama_read_image(image_path: str, model: str) -> ChatResponse | None:
 
     content = response.message.content
     if "No plate found" in content:
+        print("No plate found")
+        return None
+
+    if not plate_is_valid(content):
+        print(f"Invalid plate found: {content}")
         return None
 
     return response
