@@ -19,6 +19,7 @@ class Car:
     color_description: str
     fuel_type: str
     fuel_consumption_liter_per_10km: float
+    wltp_combined_range_km: int
     transmission_type: str
     maximum_speed_kmh: int
     inspection_due_date: date
@@ -41,6 +42,9 @@ def plate_is_valid(plate: str) -> bool:
 
 
 def parse_car_from_json(json_data: dict) -> Car:
+    fuel_consumption_liter_per_10km: float | None = None
+    wltp_combined_range_km: int | None = None
+
     root = json_data['kjoretoydataListe'][0]
     technical_approval = root['godkjenning']['tekniskGodkjenning']
     general = technical_approval['tekniskeData']["generelt"]
@@ -63,7 +67,13 @@ def parse_car_from_json(json_data: dict) -> Car:
     color_description = color.get('kodeBeskrivelse')
 
     fuel_type = environment_and_fuel_group['drivstoffKodeMiljodata'].get('kodeNavn')
-    fuel_consumption_liter_per_100km = environment_and_fuel_group['forbrukOgUtslipp'][0].get('forbrukBlandetKjoring')
+    if str(fuel_type).lower() == 'elektrisk':
+        wltp_combined_range_km = environment_and_fuel_group['forbrukOgUtslipp'][0]['wltpKjoretoyspesifikk'].get(
+            'rekkeviddeKmBlandetkjoring') or None
+    else:
+        fuel_consumption_liter_per_100km = environment_and_fuel_group['forbrukOgUtslipp'][0].get(
+            'forbrukBlandetKjoring') or None
+        fuel_consumption_liter_per_10km = float(fuel_consumption_liter_per_100km) / 10
 
     transmission_type = technical_approval['tekniskeData']['motorOgDrivverk']['girkassetype'].get('kodeNavn')
 
@@ -74,6 +84,7 @@ def parse_car_from_json(json_data: dict) -> Car:
     owner_registration_start_timestamp = root['registrering'].get('fomTidspunkt')
 
     return Car(plate, first_registered_in_norway, vehicle_category, dimensions, manufacturer_name, brand, model_name,
-               driving_side, color_name, color_description, fuel_type, (float(fuel_consumption_liter_per_100km) / 10),
+               driving_side, color_name, color_description, fuel_type, fuel_consumption_liter_per_10km,
+               wltp_combined_range_km,
                transmission_type, int(maximum_speed_kmh), inspection_due_date, last_inspection_approved_date,
                owner_registration_start_timestamp)
