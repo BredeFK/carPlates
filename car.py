@@ -52,6 +52,8 @@ def parse_car_from_json(json_data: dict) -> Car:
     environment_and_fuel_group = technical_approval['tekniskeData']['miljodata']['miljoOgdrivstoffGruppe'][0]
 
     plate = root['kjoretoyId'].get('kjennemerke')
+    if plate:
+        plate = plate.replace(' ', '')
     first_registered_in_norway = root['forstegangsregistrering'].get('registrertForstegangNorgeDato')
     vehicle_category = technical_approval['kjoretoyklassifisering'].get('beskrivelse')
 

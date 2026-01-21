@@ -3,12 +3,15 @@ from datetime import datetime
 
 from car import Car
 from car_details import fetch_car_details
+from database import create_tables, get_car_by_plate, insert_car
 from read_plate import read_plate
 
 MODEL = 'qwen3-vl'
+DB_PATH = 'cars.db'
 
 
 def main():
+    create_tables(DB_PATH)
     results = _fetch_plates()
     car_details = _fetch_details(results)
     for car_detail in car_details:
@@ -34,8 +37,13 @@ def _fetch_details(results: dict[str, str]) -> list[Car]:
         plate = results[path]
         if plate is not None:
             try:
-                car_detail = fetch_car_details(plate)
-                car_detail_list.append(car_detail)
+                car_detail = get_car_by_plate(DB_PATH, plate)
+                if car_detail is None:
+                    car_detail = fetch_car_details(plate)
+                    insert_car(DB_PATH, car_detail)
+                else:
+                    print(f'{plate} is already in the database')
+                    car_detail_list.append(car_detail)
             except Exception as e:
                 car_detail_list.append(f"Something went wrong with plate {plate}: {str(e)}")
     return car_detail_list
